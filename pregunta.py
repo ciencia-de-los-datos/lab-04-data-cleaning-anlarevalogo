@@ -24,7 +24,7 @@ def clean_data():
     df['monto_del_credito'] = df['monto_del_credito'].str.replace('[^0-9]', '', regex=True).astype(float)
 
     # Eliminar filas con datos faltantes
-    #df = df.dropna()
+    df = df.dropna()
 
     # Eliminar valores duplicados
     df = df.drop_duplicates()
