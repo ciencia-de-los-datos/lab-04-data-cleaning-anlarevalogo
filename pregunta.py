@@ -2,35 +2,67 @@
 Limpieza de datos usando Pandas
 -----------------------------------------------------------------------------------------
 
-Realice la limpieza del dataframe. Los tests evaluan si la limpieza fue realizada 
+Realice la limpieza del dataframe. Los tests evaluan si la limpieza fue realizada
 correctamente. Tenga en cuenta datos faltantes y duplicados.
 
 """
+
+import re
+from datetime import datetime
+
 import pandas as pd
 
 
 def clean_data():
 
-    df = pd.read_csv("solicitudes_credito.csv", sep=";")
+    df = pd.read_csv("solicitudes_credito.csv", sep=";", index_col=0)
+    df = df.copy()
 
-    # Limpiar los datos
-    # Convertir todas las cadenas a minúsculas
-    df = df.apply(lambda x: x.astype(str).str.lower())
+    df.dropna(inplace=True)  # eliminar filas vacias
 
-    # Convertir fechas al formato correcto
-    df['fecha_de_beneficio'] = pd.to_datetime(df['fecha_de_beneficio'], errors='coerce')
+    df["sexo"] = df["sexo"].str.lower()
 
-    # Remover caracteres especiales del monto del crédito y convertirlo a numérico
-    df['monto_del_credito'] = df['monto_del_credito'].str.replace('[^0-9]', '', regex=True).astype(float)
+    df["tipo_de_emprendimiento"] = df["tipo_de_emprendimiento"].str.lower()
 
-    # Eliminar filas con datos faltantes
-    df = df.dropna()
+    df["idea_negocio"] = [
+        str.lower(idea.replace("_", " ").replace("-", " "))
+        for idea in df["idea_negocio"]
+    ]
 
-    # Eliminar valores duplicados
-    df = df.drop_duplicates()
+    df.barrio = [
+        str.lower(barrio).replace("_", " ").replace("-", " ") for barrio in df.barrio
+    ]
 
-    # Guardar el DataFrame limpio como un archivo CSV
-    df.to_csv('solicitudes_credito_clean.csv', index=False)
+    df["barrio"] = [
+        str.lower(barrio).replace("_", " ").replace("-", " ") for barrio in df["barrio"]
+    ]
+
+
+    df["comuna_ciudadano"] = df["comuna_ciudadano"].astype(int)
+
+    df["estrato"] = df["estrato"].astype(int)
+
+    df["línea_credito"] = [
+        fila.replace("-", " ").replace("_", " ").replace(". ", ".")
+        for fila in df["línea_credito"]
+    ]
+    df["línea_credito"] = df["línea_credito"].str.lower().str.strip()  ##
+
+    df["fecha_de_beneficio"] = [
+        (
+            datetime.strptime(date, "%d/%m/%Y")
+            if bool(re.search(r"\d{1,2}/\d{2}/\d{4}", date))
+            else datetime.strptime(date, "%Y/%m/%d")
+        )
+        for date in df["fecha_de_beneficio"]
+    ]
+
+    df["monto_del_credito"] = [
+        int(monto.replace("$ ", "").replace(".00", "").replace(",", ""))
+        for monto in df["monto_del_credito"]
+    ]
+    df["monto_del_credito"] = df["monto_del_credito"].astype(int)  ##
+    df.drop_duplicates(inplace=True)
 
     return df
 
